@@ -9,7 +9,7 @@ license = "MIT"
 keywords = ["base16", "color", "color-scheme", "manager", "cli"]
 categories = ["command-line-utilities"]
 repository = "https://github.com/Misterio77/flavours"
-rust-version = "1.62.1"
+rust-version = "1.84.0"
 
 [dependencies]
 base16_color_scheme = "0.3.0"
@@ -30,3 +30,4 @@ serde_yaml = "0.8"
 shell-words = "1.0"
 shellexpand = "2.0"
 toml = "0.5"
+tinted-builder = "0.8.0"

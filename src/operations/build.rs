@@ -1,7 +1,7 @@
 use anyhow::{anyhow, Context, Result};
-use base16_color_scheme::{Scheme, Template};
 use std::fs;
 use std::path;
+use tinted_builder::{Scheme, Template};
 
 /// Build a template
 ///
@@ -10,8 +10,8 @@ use std::path;
 /// * `template_base` - Template base string
 /// * `scheme` - Scheme structure
 pub fn build_template(template_base: &str, scheme: &Scheme) -> Result<String> {
-    let template = Template::new(template_base)?;
-    Ok(template.render(scheme))
+    let template = Template::new(template_base.to_string(), scheme.clone());
+    Ok(template.render()?)
 }
 
 /// Build function
@@ -23,20 +23,15 @@ pub fn build(scheme_file: &path::Path, template_file: &path::Path) -> Result<()>
     let scheme_contents = &fs::read_to_string(&scheme_file)
         .with_context(|| format!("Couldn't read scheme file at {:?}.", scheme_file))?;
 
-    let slug = scheme_file
-        .file_stem()
-        .ok_or_else(|| anyhow!("The scheme path must contain a valid filename"))?
-        .to_string_lossy();
-    let mut scheme: Scheme = serde_yaml::from_str(scheme_contents)?;
-    scheme.slug = slug.to_string();
+    let scheme: Scheme = Scheme::Base16(serde_yaml::from_str(scheme_contents).unwrap());
 
     //Template content
     let template_content = fs::read_to_string(template_file)
         .with_context(|| format!("Couldn't read template file at {:?}.", template_file))?;
 
-    let template = Template::new(template_content)?;
+    let template = Template::new(template_content, scheme);
 
     //Template with correct colors
-    println!("{}", template.render(&scheme));
+    println!("{}", template.render().unwrap());
     Ok(())
 }

@@ -265,35 +265,35 @@ pub fn apply(
                        .with_context(||format!("Couldn't read template {}/{} at {:?}. Check if the correct template/subtemplate was specified, and run the update templates command if you didn't already.", template, subtemplate, subtemplate_file))?;
 
         //Template with correct colors
-        let built_template = build_template(&template_content, &scheme)
-            .context("Couldn't replace placeholders. Check if all colors on the specified scheme file are valid (don't include a leading '#').")?;
-
-        //File to write
-        let file = shellexpand::full(&item.file)?.to_string();
-
-        //Rewrite file with built template
-        if rewrite {
-            std::path::Path::new(&file)
-                .parent()
-                .and_then(|p| fs::create_dir_all(p).ok());
-            fs::write(&file, built_template)
-                .with_context(|| format!("Couldn't write to file {:?}.", file))?;
-
-            if verbose {
-                println!("Wrote {}/{} on: {:?}", template, subtemplate, file)
-            }
-        } else {
-            //Or replace with delimiters
-            let file_content = fs::read_to_string(&file)?;
-            match replace_delimiter(&file_content, &start, &end, &built_template) {
-                Ok(content) => fs::write(&file, content)
-                    .with_context(|| format!("Couldn't write to file {:?}", file))?,
-                Err(error) => eprintln!("Couldn't replace lines in {:?}: {}", file, error),
-            }
-            if verbose {
-                println!("Wrote {}/{} on {:?}", template, subtemplate, file);
-            }
-        }
+        //                let built_template = build_template(&template_content, &scheme)
+        //                    .context("Couldn't replace placeholders. Check if all colors on the specified scheme file are valid (don't include a leading '#').")?;
+        //
+        //        //File to write
+        //        let file = shellexpand::full(&item.file)?.to_string();
+        //
+        //        //Rewrite file with built template
+        //        if rewrite {
+        //            std::path::Path::new(&file)
+        //                .parent()
+        //                .and_then(|p| fs::create_dir_all(p).ok());
+        //            fs::write(&file, built_template)
+        //                .with_context(|| format!("Couldn't write to file {:?}.", file))?;
+        //
+        //            if verbose {
+        //                println!("Wrote {}/{} on: {:?}", template, subtemplate, file)
+        //            }
+        //        } else {
+        //            //Or replace with delimiters
+        //            let file_content = fs::read_to_string(&file)?;
+        //            match replace_delimiter(&file_content, &start, &end, &built_template) {
+        //                Ok(content) => fs::write(&file, content)
+        //                    .with_context(|| format!("Couldn't write to file {:?}", file))?,
+        //                Err(error) => eprintln!("Couldn't replace lines in {:?}: {}", file, error),
+        //            }
+        //            if verbose {
+        //                println!("Wrote {}/{} on {:?}", template, subtemplate, file);
+        //            }
+        //        }
 
         let command = item.hook.clone();
         let shell = shell.clone();
