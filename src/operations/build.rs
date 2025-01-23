@@ -23,7 +23,7 @@ pub fn build(scheme_file: &path::Path, template_file: &path::Path) -> Result<()>
     let scheme_contents = &fs::read_to_string(&scheme_file)
         .with_context(|| format!("Couldn't read scheme file at {:?}.", scheme_file))?;
 
-    let scheme: Scheme = Scheme::Base16(serde_yaml::from_str(scheme_contents).unwrap());
+    let scheme: Scheme = Scheme::Base16(serde_yaml::from_str(scheme_contents)?);
 
     //Template content
     let template_content = fs::read_to_string(template_file)
@@ -32,6 +32,6 @@ pub fn build(scheme_file: &path::Path, template_file: &path::Path) -> Result<()>
     let template = Template::new(template_content, scheme);
 
     //Template with correct colors
-    println!("{}", template.render().unwrap());
+    println!("{}", template.render()?);
     Ok(())
 }
