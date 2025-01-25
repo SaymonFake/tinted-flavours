@@ -1,9 +1,7 @@
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result};
 use std::fs;
 use std::path;
-use tinted_builder::Base16Scheme;
-use tinted_builder::SchemeSystem;
-use tinted_builder::{Scheme, Template};
+use tinted_builder::{Base16Scheme, Scheme, SchemeSystem, Template};
 
 /// Build a template
 ///
