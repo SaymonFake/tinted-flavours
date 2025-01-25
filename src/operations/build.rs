@@ -1,6 +1,8 @@
 use anyhow::{anyhow, Context, Result};
 use std::fs;
 use std::path;
+use tinted_builder::Base16Scheme;
+use tinted_builder::SchemeSystem;
 use tinted_builder::{Scheme, Template};
 
 /// Build a template
@@ -23,13 +25,27 @@ pub fn build(scheme_file: &path::Path, template_file: &path::Path) -> Result<()>
     let scheme_contents = &fs::read_to_string(&scheme_file)
         .with_context(|| format!("Couldn't read scheme file at {:?}.", scheme_file))?;
 
-    let scheme: Scheme = Scheme::Base16(serde_yaml::from_str(scheme_contents)?);
+    let mut scheme: Base16Scheme = serde_yaml::from_str(scheme_contents)?;
+
+    // Add fallback colors to base16 schemes
+    if scheme.system == SchemeSystem::Base16 {
+        let palette = &mut scheme.palette;
+
+        palette.insert("base10".to_string(), palette["base00"].clone());
+        palette.insert("base11".to_string(), palette["base00"].clone());
+        palette.insert("base12".to_string(), palette["base08"].clone());
+        palette.insert("base13".to_string(), palette["base0A"].clone());
+        palette.insert("base14".to_string(), palette["base0B"].clone());
+        palette.insert("base15".to_string(), palette["base0C"].clone());
+        palette.insert("base16".to_string(), palette["base0D"].clone());
+        palette.insert("base17".to_string(), palette["base0E"].clone());
+    }
 
     //Template content
     let template_content = fs::read_to_string(template_file)
         .with_context(|| format!("Couldn't read template file at {:?}.", template_file))?;
 
-    let template = Template::new(template_content, scheme);
+    let template = Template::new(template_content, Scheme::Base16(scheme));
 
     //Template with correct colors
     println!("{}", template.render()?);
