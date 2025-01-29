@@ -1,4 +1,4 @@
-use anyhow::{Result, anyhow};
+use anyhow::{anyhow, Result};
 use glob::glob;
 use path::{Path, PathBuf};
 use std::path;
@@ -17,13 +17,13 @@ pub fn find_schemes(pattern: &str, base_dir: &Path, config_dir: &Path) -> Result
 
     let mut found = Vec::new();
     for dir in dirs {
-        let glob_pattern = format!("{}/*/{}.y*ml", dir, pattern);
+        let glob_pattern = format!("{}/**/{}.y*ml", dir, pattern);
         let matches = glob(&glob_pattern)?;
         for element in matches {
             found.push(element?);
         }
     }
-    
+
     Ok(found)
 }
 
@@ -49,7 +49,10 @@ pub fn find_templates(pattern: &str, base_dir: &Path, config_dir: &Path) -> Resu
         // automatically expand single '/' to '/templates/'
         Some((template_pattern, subtemplate_pattern)) => {
             let subtemplate_pattern = subtemplate_pattern.replace("templates/", "");
-            format!("{}/templates/{}.mustache", template_pattern, subtemplate_pattern)
+            format!(
+                "{}/templates/{}.mustache",
+                template_pattern, subtemplate_pattern
+            )
         }
         // otherwise leave pattern untouched
         None => pattern.to_string(),
@@ -95,11 +98,10 @@ pub fn find_template(
     } else if template_data_file.is_file() {
         Ok(template_data_file)
     } else {
-        return Err(
-            anyhow!(
-                "Neither {:?} or {:?} exist",
-                template_config_file, template_data_file
-            )
-        )
+        return Err(anyhow!(
+            "Neither {:?} or {:?} exist",
+            template_config_file,
+            template_data_file
+        ));
     }
 }
