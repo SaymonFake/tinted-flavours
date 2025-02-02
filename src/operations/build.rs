@@ -43,10 +43,9 @@ pub fn build(scheme_file: &path::Path, template_file: &path::Path) -> Result<()>
 ///
 /// * `scheme` - Scheme structure
 fn convert_scheme(mut scheme: Base16Scheme) -> Scheme {
-    // add fallback colors to base16 schemes
     if scheme.system == SchemeSystem::Base16 {
+        // add fallback colors to base16 schemes
         let palette = &mut scheme.palette;
-
         palette.insert("base10".to_string(), palette["base00"].clone());
         palette.insert("base11".to_string(), palette["base00"].clone());
         palette.insert("base12".to_string(), palette["base08"].clone());
@@ -55,6 +54,9 @@ fn convert_scheme(mut scheme: Base16Scheme) -> Scheme {
         palette.insert("base15".to_string(), palette["base0C"].clone());
         palette.insert("base16".to_string(), palette["base0D"].clone());
         palette.insert("base17".to_string(), palette["base0E"].clone());
+
+        Scheme::Base16(scheme)
+    } else {
+        Scheme::Base24(scheme)
     }
-    Scheme::Base16(scheme)
 }
