@@ -177,6 +177,10 @@ pub fn apply(
             .with_context(|| format!("Couldn't create configuration file at {:?}", config_path))?;
     }
 
+    let last_scheme_file = &base_dir.join("lastscheme");
+    fs::write(&last_scheme_file, &scheme.slug)
+        .with_context(|| "Couldn't update applied scheme name")?;
+
     let config_contents = fs::read_to_string(config_path)
         .with_context(|| format!("Couldn't read configuration file {:?}.", config_path))?;
 
@@ -294,10 +298,6 @@ pub fn apply(
             hooks.push(thread::spawn(move || run_hook(command, &shell, verbose)));
         }
     }
-
-    let last_scheme_file = &base_dir.join("lastscheme");
-    fs::write(&last_scheme_file, &scheme.slug)
-        .with_context(|| "Couldn't update applied scheme name")?;
 
     while !hooks.is_empty() {
         hooks
