@@ -1,11 +1,9 @@
 use anyhow::{anyhow, Context, Result};
-use base16_color_scheme::{
-    scheme::{RgbColor, RgbColorFormatter},
-    Scheme,
-};
 use calm_io::stdoutln;
+use itertools::Itertools;
 use std::fs::read_to_string;
 use std::path::Path;
+use tinted_builder::{Base16Scheme, Color};
 
 use crate::find::find_schemes;
 
@@ -37,15 +35,14 @@ pub fn print_color(color: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn print_color_rgb(color: RgbColor) -> Result<()> {
-    use base16_color_scheme::template::color_field::{Format, Hex};
+pub fn print_color_rgb(color: Color) -> Result<()> {
     use std::fmt::{self, Display, Formatter};
 
-    struct TrueColor(RgbColor, bool);
+    struct TrueColor(Color, bool);
 
     impl Display for TrueColor {
         fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-            let RgbColor([r, g, b]) = self.0;
+            let (r, g, b) = self.0.rgb;
             let code = if self.1 { 48 } else { 38 };
             write!(f, "\x1b[{code};2;{r};{g};{b}m")
         }
@@ -53,13 +50,9 @@ pub fn print_color_rgb(color: RgbColor) -> Result<()> {
 
     const RESETCOLOR: &str = "\x1b[0m";
 
-    let true_color_fg = TrueColor(color, true);
-    let true_color_bg = TrueColor(color, false);
+    let true_color_fg = TrueColor(color.clone(), true);
+    let true_color_bg = TrueColor(color.clone(), false);
 
-    let color = RgbColorFormatter {
-        color,
-        format: Format::Hex(Hex::Rgb),
-    };
     match stdoutln!("{true_color_fg} #{color} {RESETCOLOR}  {true_color_bg}#{color}{RESETCOLOR}",) {
         Ok(_) => Ok(()),
         Err(e) => match e.kind() {
@@ -103,20 +96,14 @@ pub fn info(patterns: Vec<&str>, base_dir: &Path, config_dir: &Path, raw: bool) 
                 },
             }?;
         }
-        let scheme_slug = scheme_file
-            .file_stem()
-            .ok_or_else(|| anyhow!("Couldn't get scheme name."))?
-            .to_str()
-            .ok_or_else(|| anyhow!("Couldn't convert scheme file name."))?;
         let scheme_contents = read_to_string(&scheme_file)
             .with_context(|| format!("Couldn't read scheme file at {:?}.", scheme_file))?;
 
-        let mut scheme: Scheme = serde_yaml::from_str(&scheme_contents)?;
-        scheme.slug = scheme_slug.to_string();
+        let scheme: Base16Scheme = serde_yaml::from_str(&scheme_contents)?;
 
         match stdoutln!(
             "{} ({}) @ {}",
-            scheme.scheme,
+            scheme.name,
             scheme.slug,
             scheme_file.to_string_lossy()
         ) {
@@ -136,15 +123,8 @@ pub fn info(patterns: Vec<&str>, base_dir: &Path, config_dir: &Path, raw: bool) 
         }?;
 
         if raw {
-            for (_, &color) in scheme.colors.iter() {
-                use base16_color_scheme::template::color_field::{Format, Hex};
-                match stdoutln!(
-                    "#{}",
-                    RgbColorFormatter {
-                        color,
-                        format: Format::Hex(Hex::Rgb)
-                    }
-                ) {
+            for color in scheme.palette.iter().sorted_by_key(|x| x.0) {
+                match stdoutln!("#{}", color.1.to_hex()) {
                     Ok(_) => Ok(()),
                     Err(e) => match e.kind() {
                         std::io::ErrorKind::BrokenPipe => Ok(()),
@@ -153,8 +133,8 @@ pub fn info(patterns: Vec<&str>, base_dir: &Path, config_dir: &Path, raw: bool) 
                 }?;
             }
         } else {
-            for (_, &color) in scheme.colors.iter() {
-                print_color_rgb(color)?;
+            for color in scheme.palette.iter().sorted_by_key(|x| x.0) {
+                print_color_rgb(color.1.clone())?;
             }
         }
     }
